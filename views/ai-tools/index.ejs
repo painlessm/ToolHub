@@ -1,0 +1,48 @@
+<div class="container" style="padding:3rem 2rem;">
+  <div class="page-header">
+    <h1>AI 工具导航</h1>
+    <p>精选 AI 工具合集 — 发现最好用的 AI 产品</p>
+  </div>
+
+  <!-- 分类筛选 -->
+  <div class="filter-bar">
+    <a href="/ai-tools" class="filter-pill <% if (!currentCategory) { %>active<% } %>">全部</a>
+    <% categories.forEach(cat => { %>
+      <a href="/ai-tools?category=<%= encodeURIComponent(cat) %>" class="filter-pill <% if (currentCategory === cat) { %>active<% } %>"><%= cat %></a>
+    <% }) %>
+  </div>
+
+  <!-- 工具列表 -->
+  <% if (tools.length === 0) { %>
+    <div class="empty-state">
+      <p>暂无数据</p>
+      <p>AI 工具数据库正在建设中，敬请期待</p>
+    </div>
+  <% } else { %>
+    <div class="grid grid-3">
+      <% tools.forEach(tool => { %>
+        <a href="/ai-tools/<%= tool.id %>" class="card tool-card">
+          <div class="ai-card-logo">
+            <% if (tool.logo_url) { %>
+              <img src="<%= tool.logo_url %>" alt="<%= tool.name %>" onerror="this.style.display='none';this.nextSibling.style.display='block';">
+              <span style="display:none"><%= tool.name[0] %></span>
+            <% } else { %>
+              <%= tool.name[0] %>
+            <% } %>
+          </div>
+          <div class="tool-card-info" style="flex:1;min-width:0;">
+            <h3 style="display:flex;align-items:center;gap:0.25rem;">
+              <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"><%= tool.name %></span>
+              <% if (tool.is_featured) { %><span class="featured-star">★</span><% } %>
+            </h3>
+            <p style="overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;"><%= tool.description || '暂无描述' %></p>
+            <span style="margin-top:0.4rem;display:inline-block;" class="tag <%= tool.pricing === 'free' ? 'tag-green' : tool.pricing === 'freemium' ? 'tag-blue' : 'tag-purple' %>"><%= tool.pricing %></span>
+          </div>
+        </a>
+      <% }) %>
+    </div>
+  <% } %>
+
+  <!-- 广告预留 -->
+  <div style="margin-top:2rem;" class="ad-slot">广告位 — 收录 & 广告合作</div>
+</div>

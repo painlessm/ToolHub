@@ -1,0 +1,2 @@
+{"type":"server-started","port":53775,"host":"0.0.0.0","url_host":"localhost","url":"http://localhost:53775","screen_dir":"/opt/toolhub/.superpowers/brainstorm/470526-1778655341/content","state_dir":"/opt/toolhub/.superpowers/brainstorm/470526-1778655341/state"}
+{"type":"server-stopped","reason":"idle timeout"}

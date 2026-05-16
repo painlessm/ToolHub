@@ -1,0 +1,41 @@
+<div class="container tool-page">
+  <div class="tool-page-header">
+    <h1>图片转 Base64</h1>
+    <p>将图片转换为 Base64 编码字符串，可用于嵌入 HTML/CSS</p>
+  </div>
+
+  <div class="tool-form" style="max-width:100%;">
+    <input type="file" id="b64img-file" accept="image/*" style="font-size:0.8125rem;margin-bottom:1rem;display:block;">
+
+    <div id="b64img-result" style="display:none;">
+      <img id="b64img-preview" style="max-height:192px;border:1px solid var(--color-border);border-radius:var(--radius);margin-bottom:0.75rem;">
+      <div style="font-size:0.8125rem;color:var(--color-text-secondary);margin-bottom:0.35rem;">Base64 Data URL (前 200 字符):</div>
+      <textarea id="b64img-output" rows="6" readonly style="width:100%;border:1px solid var(--color-border);border-radius:var(--radius);padding:0.75rem;font-family:var(--font-mono);font-size:0.6875rem;background:#f9fafb;resize:vertical;margin-bottom:0.5rem;"></textarea>
+      <button onclick="copyBase64()" class="btn btn-primary btn-sm">复制到剪贴板</button>
+    </div>
+  </div>
+</div>
+
+<script>
+document.getElementById('b64img-file').onchange = async function(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const formData = new FormData();
+  formData.append('image', file);
+  try {
+    const resp = await fetch('/tools/api/image-to-base64', { method: 'POST', body: formData });
+    const data = await resp.json();
+    if (!data.success) return alert(data.error);
+    document.getElementById('b64img-result').style.display = 'block';
+    document.getElementById('b64img-preview').src = data.dataUrl;
+    document.getElementById('b64img-output').value = data.dataUrl;
+  } catch(e) { alert('转换失败: ' + e.message); }
+};
+
+function copyBase64() {
+  const ta = document.getElementById('b64img-output');
+  ta.select();
+  document.execCommand('copy');
+  alert('已复制到剪贴板');
+}
+</script>

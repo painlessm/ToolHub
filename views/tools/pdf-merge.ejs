@@ -1,0 +1,47 @@
+<div class="container tool-page">
+  <div class="tool-page-header">
+    <h1>PDF 合并</h1>
+    <p>在线合并多个 PDF 文件 — 选择文件，点击合并即可</p>
+  </div>
+
+  <div class="tool-form" style="max-width:100%;">
+    <input type="file" id="pdf-files" accept="application/pdf" multiple style="font-size:0.8125rem;margin-bottom:0.5rem;display:block;">
+    <div id="pdf-list" style="font-size:0.8125rem;color:var(--color-text-secondary);margin-bottom:0.75rem;"></div>
+    <button onclick="mergePdfs()" class="btn btn-primary">合并 PDF</button>
+    <div id="pdf-status" style="font-size:0.8125rem;margin-top:0.5rem;"></div>
+    <a id="pdf-download" class="btn btn-green btn-sm" download="merged.pdf" style="display:none;margin-top:0.5rem;">下载合并文件</a>
+  </div>
+</div>
+
+<script>
+document.getElementById('pdf-files').onchange = function(e) {
+  const files = [...e.target.files];
+  const list = document.getElementById('pdf-list');
+  list.innerHTML = files.map((f, i) => '<div>' + (i+1) + '. ' + f.name + ' (' + formatSize2(f.size) + ')</div>').join('');
+};
+
+async function mergePdfs() {
+  const files = document.getElementById('pdf-files').files;
+  if (files.length < 2) { document.getElementById('pdf-status').innerHTML = '<span style="color:#dc2626;">请至少选择 2 个 PDF 文件</span>'; return; }
+  document.getElementById('pdf-status').innerHTML = '<span style="color:#3b82f6;">合并中，请稍候...</span>';
+
+  const formData = new FormData();
+  for (const f of files) formData.append('pdfs', f);
+
+  try {
+    const resp = await fetch('/tools/api/pdf-merge', { method: 'POST', body: formData });
+    const data = await resp.json();
+    if (!data.success) { document.getElementById('pdf-status').innerHTML = '<span style="color:#dc2626;">' + data.error + '</span>'; return; }
+    const dl = document.getElementById('pdf-download');
+    dl.href = data.dataUrl;
+    dl.style.display = 'inline-flex';
+    document.getElementById('pdf-status').innerHTML = '<span style="color:#10b981;">合并成功!</span>';
+  } catch(e) {
+    document.getElementById('pdf-status').innerHTML = '<span style="color:#dc2626;">失败: ' + e.message + '</span>';
+  }
+}
+
+function formatSize2(bytes) {
+  return bytes < 1024 ? bytes+'B' : bytes < 1048576 ? (bytes/1024).toFixed(1)+'KB' : (bytes/1048576).toFixed(1)+'MB';
+}
+</script>

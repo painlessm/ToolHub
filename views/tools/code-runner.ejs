@@ -1,0 +1,139 @@
+<div class="container tool-page" style="max-width:1320px;">
+  <div class="tool-page-header">
+    <h1>在线代码运行器</h1>
+    <p>在线运行 C / C++ / Python 代码 — 即时编译执行，支持标准输入（Ctrl+Enter 运行）</p>
+  </div>
+
+  <div class="tool-actions">
+    <select id="code-lang" style="border:1px solid var(--color-border);border-radius:var(--radius);padding:0.6rem 0.75rem;font-size:var(--text-sm);font-family:var(--font-body);background:var(--color-bg);color:var(--color-text);cursor:pointer;">
+      <option value="python" selected>Python</option>
+      <option value="c">C</option>
+      <option value="cpp">C++</option>
+    </select>
+    <button onclick="runCode()" class="btn btn-primary" id="run-btn">▶ 运行</button>
+    <button onclick="clearAll()" class="btn btn-outline">清除</button>
+  </div>
+
+  <!-- 代码 (2/3) + 输出 (1/3) -->
+  <div class="tool-panels" style="grid-template-columns:2fr 1fr;margin-bottom:var(--space-4);">
+    <div class="panel">
+      <label class="panel-label">代码</label>
+      <textarea id="code-input" class="tool-textarea" style="min-height:420px;font-size:0.8125rem;tab-size:2;" placeholder="在此输入代码..." spellcheck="false"></textarea>
+    </div>
+    <div class="panel">
+      <label class="panel-label">输出</label>
+      <textarea id="code-output" class="tool-textarea" style="min-height:420px;font-size:0.8125rem;" readonly placeholder="运行结果将显示在此处..."></textarea>
+    </div>
+  </div>
+
+  <!-- 标准输入 -->
+  <div class="tool-form" style="max-width:100%;">
+    <div class="form-group" style="margin-bottom:0;">
+      <label>标准输入 (stdin) — 程序运行时需要输入的内容，每行一次 <code style="font-size:0.6875rem;color:var(--color-text-muted);">Ctrl+Enter</code> 运行</label>
+      <textarea id="stdin-input" class="tool-textarea" rows="3" style="font-size:0.75rem;min-height:60px;font-family:var(--font-mono);" placeholder="输入数据（可选）&#10;例:&#10;3 5&#10;hello world"></textarea>
+    </div>
+  </div>
+</div>
+
+<script>
+const examples = {
+  python: [
+`# Python 示例 — 计算两数之和
+a, b = map(int, input().split())
+print(f"{a} + {b} = {a + b}")
+`,
+`3 5`
+  ],
+  c: [
+`/* C 示例 — 多行输入求和 */
+#include <stdio.h>
+
+int main() {
+    int n, x, sum = 0;
+    scanf("%d", &n);
+    for (int i = 0; i < n; i++) {
+        scanf("%d", &x);
+        sum += x;
+    }
+    printf("Sum = %d\\n", sum);
+    return 0;
+}
+`,
+`3
+10
+20
+30`
+  ],
+  cpp: [
+`// C++ 示例 — 读取多行并排序输出
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+int main() {
+    int n;
+    cin >> n;
+    vector<int> v(n);
+    for (int i = 0; i < n; i++) cin >> v[i];
+    sort(v.begin(), v.end());
+    cout << "Sorted: ";
+    for (int x : v) cout << x << " ";
+    cout << endl;
+    return 0;
+}
+`,
+`5
+42 17 8 99 3`
+  ]
+};
+
+function loadExample(lang) {
+  const pair = examples[lang];
+  document.getElementById('code-input').value = pair[0];
+  document.getElementById('stdin-input').value = pair[1] || '';
+}
+
+document.getElementById('code-lang').addEventListener('change', function() {
+  loadExample(this.value);
+});
+loadExample('python');
+
+async function runCode() {
+  const code = document.getElementById('code-input').value;
+  const language = document.getElementById('code-lang').value;
+  const stdin = document.getElementById('stdin-input').value;
+  const output = document.getElementById('code-output');
+  const btn = document.getElementById('run-btn');
+
+  if (!code.trim()) { output.value = '请先输入代码'; return; }
+
+  output.value = '运行中...';
+  btn.disabled = true;
+  btn.textContent = '⏳ 运行中';
+
+  try {
+    const resp = await fetch('/tools/api/code-run', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ language, code, stdin }),
+    });
+    const data = await resp.json();
+    output.value = data.success ? data.output : (data.error || '未知错误');
+  } catch(e) {
+    output.value = '网络错误: ' + e.message;
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '▶ 运行';
+  }
+}
+
+function clearAll() {
+  document.getElementById('code-output').value = '';
+}
+
+// Ctrl+Enter 运行
+document.getElementById('code-input').addEventListener('keydown', function(e) {
+  if (e.ctrlKey && e.key === 'Enter') runCode();
+});
+</script>

@@ -1,0 +1,20 @@
+<div class="auth-page">
+  <div class="auth-card">
+    <h1>登录</h1>
+    <% if (error) { %>
+      <div class="alert-error"><%= error %></div>
+    <% } %>
+    <form method="POST">
+      <div class="form-group">
+        <label>邮箱</label>
+        <input name="email" type="email" required placeholder="your@email.com">
+      </div>
+      <div class="form-group">
+        <label>密码</label>
+        <input name="password" type="password" required placeholder="至少 6 位">
+      </div>
+      <button type="submit">登录</button>
+    </form>
+    <p class="auth-alt">还没有账号？<a href="/signup">立即注册</a></p>
+  </div>
+</div>

@@ -1,0 +1,89 @@
+<div class="container tool-page">
+  <div class="tool-page-header">
+    <h1>图片压缩</h1>
+    <p>在线图片压缩 — 支持 PNG、JPEG、WebP，最大 10MB</p>
+  </div>
+
+  <div class="tool-form" style="max-width:100%;">
+    <div style="display:flex;flex-wrap:wrap;align-items:center;gap:0.75rem;margin-bottom:1rem;">
+      <input type="file" id="img-file" accept="image/png,image/jpeg,image/webp" style="font-size:0.8125rem;">
+      <select id="img-format" style="border:1px solid var(--color-border);border-radius:var(--radius);padding:0.45rem 0.5rem;font-size:0.8125rem;">
+        <option value="jpeg">JPEG</option>
+        <option value="png">PNG</option>
+        <option value="webp">WebP</option>
+      </select>
+      <label style="font-size:0.8125rem;color:var(--color-text-secondary);">质量:</label>
+      <input type="range" id="img-quality" min="10" max="100" value="80" style="width:120px;">
+      <span id="quality-label" style="font-size:0.8125rem;color:var(--color-text-secondary);min-width:24px;">80</span>
+    </div>
+
+    <button onclick="compressImage()" class="btn btn-primary">压缩</button>
+
+    <div id="img-status" style="font-size:0.8125rem;margin-top:0.5rem;"></div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:1rem;">
+      <div>
+        <div style="font-size:0.75rem;color:var(--color-text-muted);margin-bottom:0.25rem;">原图</div>
+        <img id="img-preview-orig" style="max-height:256px;border:1px solid var(--color-border);border-radius:var(--radius);display:none;">
+        <div id="orig-size" style="font-size:0.75rem;color:var(--color-text-muted);margin-top:0.25rem;"></div>
+      </div>
+      <div>
+        <div style="font-size:0.75rem;color:var(--color-text-muted);margin-bottom:0.25rem;">压缩后</div>
+        <img id="img-preview-comp" style="max-height:256px;border:1px solid var(--color-border);border-radius:var(--radius);display:none;">
+        <div id="comp-size" style="font-size:0.75rem;color:var(--color-text-muted);margin-top:0.25rem;"></div>
+        <a id="img-download" class="btn btn-green btn-sm" download="compressed" style="display:none;margin-top:0.5rem;">下载</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.getElementById('img-quality').oninput = function() {
+  document.getElementById('quality-label').textContent = this.value;
+};
+document.getElementById('img-file').onchange = function(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(ev) {
+    const img = document.getElementById('img-preview-orig');
+    img.src = ev.target.result;
+    img.style.display = 'block';
+    document.getElementById('orig-size').textContent = '原图大小: ' + formatSize(file.size);
+  };
+  reader.readAsDataURL(file);
+};
+
+function formatSize(bytes) {
+  return bytes < 1024 ? bytes + ' B' : bytes < 1048576 ? (bytes/1024).toFixed(1) + ' KB' : (bytes/1048576).toFixed(1) + ' MB';
+}
+
+async function compressImage() {
+  const file = document.getElementById('img-file').files[0];
+  if (!file) { document.getElementById('img-status').innerHTML = '<span style="color:#dc2626;">请先选择图片</span>'; return; }
+  document.getElementById('img-status').innerHTML = '<span style="color:#3b82f6;">压缩中...</span>';
+
+  const formData = new FormData();
+  formData.append('image', file);
+  formData.append('quality', document.getElementById('img-quality').value);
+  formData.append('format', document.getElementById('img-format').value);
+
+  try {
+    const resp = await fetch('/tools/api/image-compress', { method: 'POST', body: formData });
+    const data = await resp.json();
+    if (!data.success) { document.getElementById('img-status').innerHTML = '<span style="color:#dc2626;">' + data.error + '</span>'; return; }
+
+    const img = document.getElementById('img-preview-comp');
+    img.src = data.dataUrl;
+    img.style.display = 'block';
+    document.getElementById('comp-size').textContent = '压缩后: ' + formatSize(data.compressedSize) + ' (节省 ' + Math.round((1 - data.compressedSize/data.originalSize)*100) + '%)';
+    const dl = document.getElementById('img-download');
+    dl.href = data.dataUrl;
+    dl.style.display = 'inline-flex';
+    dl.setAttribute('download', 'compressed.' + (document.getElementById('img-format').value === 'jpeg' ? 'jpg' : document.getElementById('img-format').value));
+    document.getElementById('img-status').innerHTML = '<span style="color:#10b981;">压缩完成!</span>';
+  } catch(e) {
+    document.getElementById('img-status').innerHTML = '<span style="color:#dc2626;">请求失败: ' + e.message + '</span>';
+  }
+}
+</script>

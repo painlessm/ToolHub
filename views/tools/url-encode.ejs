@@ -1,0 +1,39 @@
+<div class="container tool-page">
+  <div class="tool-page-header">
+    <h1>URL 编解码</h1>
+    <p>在线 URL 编码和解码 — 将特殊字符转换为 URL 安全格式</p>
+  </div>
+
+  <div class="tool-actions">
+    <button onclick="urlEncode()" class="btn btn-primary">URL 编码</button>
+    <button onclick="urlDecode()" class="btn btn-green">URL 解码</button>
+    <button onclick="swapUrl()" class="btn btn-outline">交换</button>
+    <button onclick="clearAll('url-input','url-output')" class="btn btn-outline">清空</button>
+  </div>
+
+  <div class="tool-panels">
+    <div class="panel">
+      <label class="panel-label">输入</label>
+      <textarea id="url-input" rows="18" placeholder="输入要编码/解码的文本..."></textarea>
+    </div>
+    <div class="panel">
+      <label class="panel-label">输出</label>
+      <textarea id="url-output" rows="18" readonly placeholder="结果将显示在此处..."></textarea>
+    </div>
+  </div>
+</div>
+
+<script>
+function urlEncode() {
+  document.getElementById('url-output').value = encodeURIComponent(document.getElementById('url-input').value);
+}
+function urlDecode() {
+  try { document.getElementById('url-output').value = decodeURIComponent(document.getElementById('url-input').value.trim()); }
+  catch(e) { document.getElementById('url-output').value = '解码失败: ' + e.message; }
+}
+function swapUrl() {
+  const inp = document.getElementById('url-input');
+  const out = document.getElementById('url-output');
+  [inp.value, out.value] = [out.value, inp.value];
+}
+</script>

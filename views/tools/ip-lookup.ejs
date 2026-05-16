@@ -1,0 +1,82 @@
+<div class="container tool-page">
+  <div class="tool-page-header">
+    <h1>IP 查询</h1>
+    <p>查询 IP 地址归属地 — 地理位置、运营商、ASN 信息</p>
+  </div>
+
+  <div class="tool-form" style="max-width:720px;">
+    <div class="form-group">
+      <label>IP 地址</label>
+      <div class="form-row">
+        <input id="ip-input" type="text" placeholder="输入 IP 地址，留空查询本机" style="flex:1;">
+        <button onclick="lookupIp()" class="btn btn-primary">查询</button>
+        <button onclick="lookupMyIp()" class="btn btn-outline">本机 IP</button>
+      </div>
+    </div>
+
+    <div id="ip-result" style="display:none;">
+      <div class="form-group">
+        <label>查询结果</label>
+        <div class="stat-grid" style="grid-template-columns:repeat(2,1fr);margin-top:0.5rem;">
+          <div class="stat-card" style="text-align:left;">
+            <span class="stat-label">IP 地址</span>
+            <span class="stat-value" style="font-size:1rem;font-family:var(--font-mono);word-break:break-all;" id="rip-ip">—</span>
+          </div>
+          <div class="stat-card" style="text-align:left;">
+            <span class="stat-label">国家 / 地区</span>
+            <span class="stat-value" style="font-size:1rem;" id="rip-country">—</span>
+          </div>
+          <div class="stat-card" style="text-align:left;">
+            <span class="stat-label">城市</span>
+            <span class="stat-value" style="font-size:1rem;" id="rip-city">—</span>
+          </div>
+          <div class="stat-card" style="text-align:left;">
+            <span class="stat-label">运营商 / ISP</span>
+            <span class="stat-value green" style="font-size:0.875rem;" id="rip-isp">—</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="ip-error" class="alert-error" style="display:none;"></div>
+  </div>
+</div>
+
+<script>
+async function lookupMyIp() {
+  document.getElementById('ip-input').value = '';
+  await lookupIp();
+}
+
+async function lookupIp() {
+  const ip = document.getElementById('ip-input').value.trim();
+  const result = document.getElementById('ip-result');
+  const error = document.getElementById('ip-error');
+  result.style.display = 'none';
+  error.style.display = 'none';
+
+  try {
+    const url = ip ? '/tools/api/ip-lookup?ip=' + encodeURIComponent(ip) : '/tools/api/ip-lookup';
+    const resp = await fetch(url);
+    const data = await resp.json();
+
+    if (!data.success) {
+      error.textContent = data.error || '查询失败';
+      error.style.display = 'block';
+      return;
+    }
+
+    document.getElementById('rip-ip').textContent = data.ip;
+    document.getElementById('rip-country').textContent = [data.country, data.region].filter(Boolean).join(', ') || '—';
+    document.getElementById('rip-city').textContent = data.city || '—';
+    document.getElementById('rip-isp').textContent = data.isp || '—';
+    result.style.display = 'block';
+  } catch(e) {
+    error.textContent = '网络错误: ' + e.message;
+    error.style.display = 'block';
+  }
+}
+
+// 页面加载时自动查询本机 IP
+lookupMyIp();
+</script>

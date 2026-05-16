@@ -1,0 +1,86 @@
+<div class="container tool-page">
+  <div class="tool-page-header">
+    <h1>JSON 格式化</h1>
+    <p>在线 JSON 格式化、压缩、验证工具 — 粘贴 JSON 即可美化或压缩</p>
+  </div>
+
+  <!-- 工具栏 -->
+  <div class="tool-actions">
+    <button onclick="formatJson()" class="btn btn-primary">格式化</button>
+    <button onclick="minifyJson()" class="btn btn-gray">压缩</button>
+    <button onclick="validateJson()" class="btn btn-green">验证</button>
+    <button onclick="clearAll('json-input','json-output')" class="btn btn-outline">清空</button>
+    <span id="json-status" class="tool-status"></span>
+  </div>
+
+  <!-- 编辑区 -->
+  <div class="tool-panels">
+    <div class="panel">
+      <label class="panel-label">输入</label>
+      <textarea id="json-input" rows="20" placeholder='粘贴 JSON 到此处... 例: {"name":"ToolHub","version":"1.0"}'></textarea>
+    </div>
+    <div class="panel">
+      <label class="panel-label">输出</label>
+      <textarea id="json-output" rows="20" readonly placeholder="格式化结果将显示在此处..."></textarea>
+    </div>
+  </div>
+
+  <!-- 广告预留 -->
+  <div style="margin-top:2rem;" class="ad-slot">广告位 — Google AdSense</div>
+</div>
+
+<script>
+function formatJson() {
+  const input = document.getElementById('json-input').value.trim();
+  const output = document.getElementById('json-output');
+  const status = document.getElementById('json-status');
+  if (!input) return;
+  try {
+    const obj = JSON.parse(input);
+    output.value = JSON.stringify(obj, null, 2);
+    status.textContent = '✓ 有效 JSON';
+    status.className = 'tool-status';
+    status.style.color = '#10b981';
+  } catch(e) {
+    status.textContent = '✗ ' + e.message;
+    status.className = 'tool-status';
+    status.style.color = '#dc2626';
+  }
+}
+
+function minifyJson() {
+  const input = document.getElementById('json-input').value.trim();
+  const output = document.getElementById('json-output');
+  const status = document.getElementById('json-status');
+  if (!input) return;
+  try {
+    const obj = JSON.parse(input);
+    output.value = JSON.stringify(obj);
+    status.textContent = '✓ 已压缩';
+    status.className = 'tool-status';
+    status.style.color = '#10b981';
+  } catch(e) {
+    status.textContent = '✗ ' + e.message;
+    status.className = 'tool-status';
+    status.style.color = '#dc2626';
+  }
+}
+
+function validateJson() {
+  const input = document.getElementById('json-input').value.trim();
+  const status = document.getElementById('json-status');
+  const output = document.getElementById('json-output');
+  if (!input) return;
+  try {
+    const obj = JSON.parse(input);
+    const keys = Object.keys(obj);
+    status.textContent = '✓ 有效 JSON — ' + (Array.isArray(obj) ? '数组, ' + obj.length + ' 项' : '对象, ' + keys.length + ' 个键');
+    status.className = 'tool-status';
+    status.style.color = '#10b981';
+  } catch(e) {
+    status.textContent = '✗ 无效: ' + e.message;
+    status.className = 'tool-status';
+    status.style.color = '#dc2626';
+  }
+}
+</script>

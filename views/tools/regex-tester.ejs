@@ -1,0 +1,68 @@
+<div class="container tool-page">
+  <div class="tool-page-header">
+    <h1>正则表达式测试器</h1>
+    <p>在线正则表达式测试 — 输入正则和文本，实时查看匹配结果</p>
+  </div>
+
+  <div class="tool-form" style="max-width:100%;">
+    <div class="form-group">
+      <label>正则表达式</label>
+      <div class="form-row">
+        <span style="display:flex;align-items:center;padding:0 0.5rem;background:#f3f4f6;border:1px solid var(--color-border);border-radius:var(--radius);font-family:var(--font-mono);color:var(--color-text-muted);">/</span>
+        <input id="regex-input" placeholder="例: \d{4}-\d{2}-\d{2}" oninput="runRegex()" style="flex:1;">
+        <span style="display:flex;align-items:center;padding:0 0.5rem;background:#f3f4f6;border:1px solid var(--color-border);border-radius:var(--radius);font-family:var(--font-mono);color:var(--color-text-muted);">/</span>
+        <select id="regex-flags" onchange="runRegex()" style="border:1px solid var(--color-border);border-radius:var(--radius);padding:0.5rem;font-size:0.8125rem;">
+          <option value="">无</option>
+          <option value="g">g</option>
+          <option value="i">i</option>
+          <option value="gi">gi</option>
+          <option value="gm">gm</option>
+          <option value="gim">gim</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>测试文本</label>
+      <textarea id="regex-text" rows="8" placeholder="粘贴测试文本..." oninput="runRegex()" style="width:100%;font-family:var(--font-mono);font-size:0.8125rem;"></textarea>
+    </div>
+    <div class="form-group">
+      <label>匹配结果</label>
+      <div id="regex-result" style="width:100%;border:1px solid var(--color-border);border-radius:var(--radius);padding:0.75rem;font-family:var(--font-mono);font-size:0.8125rem;background:#f9fafb;min-height:96px;white-space:pre-wrap;color:var(--color-text-muted);">等待输入...</div>
+    </div>
+  </div>
+</div>
+
+<script>
+function runRegex() {
+  const pattern = document.getElementById('regex-input').value;
+  const flags = document.getElementById('regex-flags').value;
+  const text = document.getElementById('regex-text').value;
+  const result = document.getElementById('regex-result');
+  if (!pattern) { result.innerHTML = '等待输入...'; result.style.color = '#9ca3af'; return; }
+  try {
+    const re = new RegExp(pattern, flags);
+    const matches = [...text.matchAll(re)];
+    if (matches.length === 0) {
+      result.innerHTML = '无匹配';
+      result.style.color = '#d97706';
+      return;
+    }
+    result.style.color = '#1f2937';
+    let html = '<span style="color:#059669;">找到 ' + matches.length + ' 处匹配</span>\n\n';
+    matches.forEach((m, i) => {
+      html += '匹配 ' + (i+1) + ': <span style="color:#2563eb;font-weight:700;">' + escapeHtml(m[0]) + '</span>';
+      if (m.index !== undefined) html += ' (位置: ' + m.index + ')';
+      if (m.groups) html += ' 命名组: ' + JSON.stringify(m.groups);
+      html += '\n';
+    });
+    result.innerHTML = html;
+  } catch(e) {
+    result.innerHTML = '正则无效: ' + escapeHtml(e.message);
+    result.style.color = '#dc2626';
+  }
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+</script>

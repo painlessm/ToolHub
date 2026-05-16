@@ -1,0 +1,42 @@
+<div class="container tool-page">
+  <div class="tool-page-header">
+    <h1>Base64 编解码</h1>
+    <p>在线 Base64 编码和解码 — 支持文本和字符串转换</p>
+  </div>
+
+  <div class="tool-actions">
+    <button onclick="base64Encode()" class="btn btn-primary">编码 (Encode)</button>
+    <button onclick="base64Decode()" class="btn btn-green">解码 (Decode)</button>
+    <button onclick="swapBase64()" class="btn btn-outline">交换</button>
+    <button onclick="clearAll('b64-input','b64-output')" class="btn btn-outline">清空</button>
+  </div>
+
+  <div class="tool-panels">
+    <div class="panel">
+      <label class="panel-label">输入</label>
+      <textarea id="b64-input" rows="18" placeholder="输入要编码/解码的文本..."></textarea>
+    </div>
+    <div class="panel">
+      <label class="panel-label">输出</label>
+      <textarea id="b64-output" rows="18" readonly placeholder="结果将显示在此处..."></textarea>
+    </div>
+  </div>
+</div>
+
+<script>
+function base64Encode() {
+  const input = document.getElementById('b64-input').value;
+  try { document.getElementById('b64-output').value = btoa(unescape(encodeURIComponent(input))); }
+  catch(e) { document.getElementById('b64-output').value = '编码失败: ' + e.message; }
+}
+function base64Decode() {
+  const input = document.getElementById('b64-input').value.trim();
+  try { document.getElementById('b64-output').value = decodeURIComponent(escape(atob(input))); }
+  catch(e) { document.getElementById('b64-output').value = '解码失败: ' + e.message; }
+}
+function swapBase64() {
+  const inp = document.getElementById('b64-input');
+  const out = document.getElementById('b64-output');
+  [inp.value, out.value] = [out.value, inp.value];
+}
+</script>

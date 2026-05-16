@@ -1,0 +1,33 @@
+<div class="container tool-page" style="max-width:800px;">
+  <a href="/ai-tools" style="color:var(--color-primary);font-size:0.8125rem;margin-bottom:1rem;display:inline-block;">&larr; 返回导航</a>
+
+  <div class="card" style="padding:1.5rem;">
+    <div style="display:flex;align-items:flex-start;gap:1rem;margin-bottom:1rem;">
+      <div class="ai-card-logo" style="width:64px;height:64px;font-size:1.5rem;">
+        <%= tool.name[0] %>
+      </div>
+      <div>
+        <h1 style="font-size:1.5rem;font-weight:700;margin-bottom:0.35rem;"><%= tool.name %></h1>
+        <div style="display:flex;gap:0.35rem;">
+          <span class="tag <%= tool.pricing === 'free' ? 'tag-green' : tool.pricing === 'freemium' ? 'tag-blue' : 'tag-purple' %>"><%= tool.pricing %></span>
+          <% if (tool.category) { %><span class="tag" style="background:#f3f4f6;color:#6b7280;"><%= tool.category %></span><% } %>
+        </div>
+      </div>
+    </div>
+
+    <p style="color:var(--color-text-secondary);margin-bottom:1.5rem;line-height:1.7;"><%= tool.description || '暂无描述' %></p>
+
+    <a href="<%= tool.url %>" target="_blank" rel="nofollow noopener" class="btn btn-primary btn-lg">访问网站 &rarr;</a>
+
+    <% if (tool.tags && tool.tags.length) { %>
+      <div style="margin-top:1.5rem;display:flex;flex-wrap:wrap;gap:0.35rem;">
+        <% tool.tags.forEach(tag => { %>
+          <span style="font-size:0.6875rem;background:#f9fafb;border:1px solid var(--color-border);padding:0.15rem 0.5rem;border-radius:999px;color:var(--color-text-muted);"><%= tag %></span>
+        <% }) %>
+      </div>
+    <% } %>
+  </div>
+
+  <!-- 广告预留 -->
+  <div style="margin-top:2rem;" class="ad-slot">广告位 — Google AdSense</div>
+</div>

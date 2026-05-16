@@ -1,0 +1,43 @@
+<div class="container tool-page">
+  <div class="tool-page-header">
+    <h1>时间戳转换</h1>
+    <p>Unix 时间戳与日期时间互转</p>
+  </div>
+
+  <div class="tool-form">
+    <div class="form-group">
+      <label>Unix 时间戳（秒）</label>
+      <div class="form-row">
+        <input id="ts-input" type="number" placeholder="例: 1747123200" value="" style="font-family:var(--font-mono);">
+        <button onclick="tsToDate()" class="btn btn-primary btn-sm">转换</button>
+        <button onclick="setNow()" class="btn btn-outline btn-sm">当前时间</button>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>结果</label>
+      <div class="tool-result">
+        <div><span class="label-col">本地时间:</span> <strong style="color:#059669;" id="ts-local">—</strong></div>
+        <div><span class="label-col">UTC 时间:</span> <span style="color:#2563eb;" id="ts-utc">—</span></div>
+        <div><span class="label-col">ISO 格式:</span> <span style="color:#2563eb;" id="ts-iso">—</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function tsToDate() {
+  let ts = parseInt(document.getElementById('ts-input').value);
+  if (!ts || ts < 0) return;
+  if (ts > 99999999999) ts = Math.floor(ts / 1000);
+  const d = new Date(ts * 1000);
+  document.getElementById('ts-local').textContent = d.toLocaleString('zh-CN');
+  document.getElementById('ts-utc').textContent = d.toUTCString();
+  document.getElementById('ts-iso').textContent = d.toISOString();
+}
+function setNow() {
+  document.getElementById('ts-input').value = Math.floor(Date.now() / 1000);
+  tsToDate();
+}
+window.onload = function() { setNow(); };
+</script>

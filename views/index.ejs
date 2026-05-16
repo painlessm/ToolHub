@@ -1,0 +1,36 @@
+<!-- 英雄区 -->
+<section class="hero">
+  <div class="container">
+    <h1>免费在线工具箱</h1>
+    <p>JSON 格式化、图片压缩、PDF 处理、Base64 编解码... 全部免费，无需注册</p>
+    <div class="hero-actions">
+      <a href="#tools" class="btn btn-dark btn-lg">开始使用</a>
+      <a href="/ai-tools" class="btn btn-outline btn-lg">AI 工具导航</a>
+    </div>
+  </div>
+</section>
+
+<!-- 工具分类 -->
+<section id="tools" class="container" style="padding:4rem 2rem;">
+  <% categories.forEach(cat => { %>
+    <div style="margin-bottom:3rem;">
+      <h2 class="section-title"><span class="section-title-icon"><%- cat.icon %></span><%= cat.name %></h2>
+      <div class="grid grid-3">
+        <% tools.filter(t => t.cat === cat.id).forEach(tool => { %>
+          <a href="/tools/<%= tool.slug %>" class="card tool-card">
+            <span class="tool-card-icon"><%- tool.icon %></span>
+            <div class="tool-card-info">
+              <h3><%= tool.name %></h3>
+              <p><%= tool.desc %></p>
+            </div>
+          </a>
+        <% }) %>
+      </div>
+    </div>
+  <% }) %>
+</section>
+
+<!-- 广告预留 -->
+<section class="container" style="padding:0 2rem 4rem;">
+  <div class="ad-slot">广告位 — Google AdSense</div>
+</section>
