@@ -1,51 +1,312 @@
-<div class="container tool-page" style="max-width:1320px;">
-  <div class="tool-page-header">
-    <h1>在线代码运行器</h1>
-    <p>在线运行 C / C++ / Python 代码 — 即时编译执行，支持标准输入（Ctrl+Enter 运行）</p>
-  </div>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/monokai.min.css">
 
-  <div class="tool-actions">
-    <select id="code-lang" style="border:1px solid var(--color-border);border-radius:var(--radius);padding:0.6rem 0.75rem;font-size:var(--text-sm);font-family:var(--font-body);background:var(--color-bg);color:var(--color-text);cursor:pointer;">
-      <option value="python" selected>Python</option>
-      <option value="c">C</option>
-      <option value="cpp">C++</option>
-    </select>
-    <button onclick="runCode()" class="btn btn-primary" id="run-btn">▶ 运行</button>
-    <button onclick="clearAll()" class="btn btn-outline">清除</button>
-  </div>
+<style>
+/* ===== 整页不滚动，撑满视口 ===== */
+html, body { height: 100%; margin: 0; }
+body { display: flex; flex-direction: column; overflow: hidden; }
+footer.footer { display: none; }
+main#main-content { flex: 1; overflow: hidden; display: flex; flex-direction: column; min-height: 0; }
+.container.tool-page { flex: 1; display: flex; flex-direction: column; max-width: 1320px; width: 100%; margin: 0 auto; padding: 8px var(--space-3); overflow: hidden; min-height: 0; }
 
-  <!-- 代码 (2/3) + 输出 (1/3) -->
-  <div class="tool-panels" style="grid-template-columns:2fr 1fr;margin-bottom:var(--space-4);">
-    <div class="panel">
-      <label class="panel-label">代码</label>
-      <textarea id="code-input" class="tool-textarea" style="min-height:420px;font-size:0.8125rem;tab-size:2;" placeholder="在此输入代码..." spellcheck="false"></textarea>
-    </div>
-    <div class="panel">
-      <label class="panel-label">输出</label>
-      <textarea id="code-output" class="tool-textarea" style="min-height:420px;font-size:0.8125rem;" readonly placeholder="运行结果将显示在此处..."></textarea>
-    </div>
-  </div>
+/* ===== 编辑器整体暗色容器 ===== */
+.code-runner-wrapper {
+  background: #2b2b2b;
+  border-radius: 8px;
+  padding: 12px 16px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
+}
 
-  <!-- 标准输入 -->
-  <div class="tool-form" style="max-width:100%;">
-    <div class="form-group" style="margin-bottom:0;">
-      <label>标准输入 (stdin) — 程序运行时需要输入的内容，每行一次 <code style="font-size:0.6875rem;color:var(--color-text-muted);">Ctrl+Enter</code> 运行</label>
-      <textarea id="stdin-input" class="tool-textarea" rows="3" style="font-size:0.75rem;min-height:60px;font-family:var(--font-mono);" placeholder="输入数据（可选）&#10;例:&#10;3 5&#10;hello world"></textarea>
+/* ===== 紧凑顶栏：标题 + 描述 + 控件一行 ===== */
+.code-runner-topbar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 10px;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+
+.code-runner-topbar .topbar-title {
+  color: #e0e0e0;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.code-runner-topbar .topbar-desc {
+  color: #999;
+  font-size: 0.75rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+  min-width: 0;
+}
+
+.code-runner-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.code-runner-toolbar label {
+  color: #bbb;
+  font-size: 0.75rem;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.code-runner-toolbar select {
+  background: #3c3c3c;
+  color: #e0e0e0;
+  border: 1px solid #555;
+  border-radius: 4px;
+  padding: 7px 28px 7px 10px;
+  font-size: 0.8125rem;
+  font-family: Consolas, Monaco, 'Courier New', monospace;
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23aaa'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+}
+
+.code-runner-toolbar select:focus {
+  outline: none;
+  border-color: #888;
+}
+
+.btn-run {
+  background: #4caf50;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  padding: 7px 18px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: Consolas, Monaco, 'Courier New', monospace;
+  transition: background 0.15s;
+}
+
+.btn-run:hover { background: #43a047; }
+.btn-run:disabled { background: #555; cursor: not-allowed; }
+
+.btn-clear {
+  background: #444;
+  color: #ccc;
+  border: 1px solid #555;
+  border-radius: 4px;
+  padding: 7px 16px;
+  font-size: 0.8125rem;
+  cursor: pointer;
+  font-family: Consolas, Monaco, 'Courier New', monospace;
+  transition: background 0.15s;
+}
+
+.btn-clear:hover { background: #555; }
+
+/* ===== 输入/输出区域 ===== */
+.io-section {
+  flex-shrink: 0;
+  margin-bottom: 2px;
+}
+
+.io-label {
+  display: block;
+  color: #bbb;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  margin-bottom: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.io-textarea {
+  width: 100%;
+  background: #1e1e1e;
+  color: #d4d4d4;
+  border: 1px solid #444;
+  border-radius: 4px;
+  padding: 8px 10px;
+  font-family: Consolas, Monaco, 'Courier New', monospace;
+  font-size: 0.8125rem;
+  resize: none;
+  box-sizing: border-box;
+  line-height: 1.5;
+}
+
+.io-textarea:focus {
+  outline: none;
+  border-color: #666;
+}
+
+.io-textarea::placeholder {
+  color: #666;
+}
+
+/* stdin 固定高度 */
+#stdin-input {
+  height: 44px;
+}
+
+/* output 可拖拽调整高度，默认 120px */
+.output-section {
+  flex-shrink: 0;
+  margin-bottom: 0;
+  position: relative;
+}
+
+#code-output {
+  height: 120px;
+  transition: none;
+}
+
+/* resize 拖拽手柄 */
+.resize-handle {
+  height: 3px;
+  cursor: ns-resize;
+  background: transparent;
+  flex-shrink: 0;
+  position: relative;
+  user-select: none;
+  margin: 0;
+}
+
+.resize-handle::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 30px;
+  height: 1.5px;
+  border-radius: 1px;
+  background: #555;
+  transition: background 0.15s;
+}
+
+.resize-handle:hover::after,
+.resize-handle.active::after {
+  background: #888;
+}
+
+/* ===== CodeMirror 暗色定制 ===== */
+.editor-section {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
+  margin-bottom: 2px;
+}
+
+.editor-section .CodeMirror {
+  flex: 1;
+  height: auto !important;
+  min-height: 0;
+  font-family: Consolas, Monaco, 'Courier New', monospace !important;
+  font-size: 13px !important;
+  line-height: 1.55 !important;
+  border-radius: 4px;
+  border: 1px solid #444;
+}
+
+/* 覆盖 monokai 背景以匹配 onlineGDB */
+.CodeMirror.cm-s-monokai {
+  background: #1e1e1e;
+}
+
+.CodeMirror.cm-s-monokai .CodeMirror-gutters {
+  background: #252526;
+  border-right: 1px solid #3c3c3c;
+}
+
+.CodeMirror.cm-s-monokai .CodeMirror-linenumber {
+  color: #858585;
+}
+
+.CodeMirror.cm-s-monokai .CodeMirror-cursor {
+  border-left-color: #fff;
+}
+
+.CodeMirror.cm-s-monokai .CodeMirror-selected {
+  background: #264f78;
+}
+
+.CodeMirror.cm-s-monokai .CodeMirror-activeline-background {
+  background: #2a2a2a;
+}
+</style>
+
+<div class="container tool-page">
+  <div class="code-runner-wrapper">
+
+    <!-- 紧凑顶栏：标题 + 描述 + 控件 一行 -->
+    <div class="code-runner-topbar">
+      <span class="topbar-title">在线代码运行器</span>
+      <span class="topbar-desc">在线运行 C / C++ / Python — 即时编译执行，Ctrl+Enter 运行</span>
+      <div class="code-runner-toolbar">
+        <label for="code-lang">语言</label>
+        <select id="code-lang">
+          <option value="python" selected>Python</option>
+          <option value="c">C</option>
+          <option value="cpp">C++</option>
+        </select>
+        <button onclick="runCode()" class="btn-run" id="run-btn">▶ 运行</button>
+        <button onclick="clearAll()" class="btn-clear">清除</button>
+      </div>
     </div>
+
+    <!-- 标准输入（上） -->
+    <div class="io-section">
+      <span class="io-label">标准输入 (stdin)</span>
+      <textarea id="stdin-input" class="io-textarea" placeholder="输入数据（可选）&#10;例：3 5"></textarea>
+    </div>
+
+    <!-- 代码编辑器（中，全宽） -->
+    <div class="editor-section">
+      <span class="io-label">代码</span>
+      <textarea id="code-input"></textarea>
+    </div>
+
+    <!-- 拖拽手柄 -->
+    <div class="resize-handle" id="resize-handle" title="拖动调整输出区域高度"></div>
+
+    <!-- 输出（下，可拖拽调整高度） -->
+    <div class="io-section output-section">
+      <span class="io-label">输出</span>
+      <textarea id="code-output" class="io-textarea" readonly placeholder="运行结果将显示在此处..."></textarea>
+    </div>
+
   </div>
 </div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/clike/clike.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/python/python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/matchbrackets.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/closebrackets.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/selection/active-line.min.js"></script>
+
 <script>
+// ===== 示例代码 =====
 const examples = {
-  python: [
-`# Python 示例 — 计算两数之和
+  python: {
+    code: `# Python 示例 — 计算两数之和
 a, b = map(int, input().split())
-print(f"{a} + {b} = {a + b}")
-`,
-`3 5`
-  ],
-  c: [
-`/* C 示例 — 多行输入求和 */
+print(f"{a} + {b} = {a + b}")`,
+    stdin: `3 5`
+  },
+  c: {
+    code: `/* C 示例 — 多行输入求和 */
 #include <stdio.h>
 
 int main() {
@@ -57,15 +318,11 @@ int main() {
     }
     printf("Sum = %d\\n", sum);
     return 0;
-}
-`,
-`3
-10
-20
-30`
-  ],
-  cpp: [
-`// C++ 示例 — 读取多行并排序输出
+}`,
+    stdin: `3\n10\n20\n30`
+  },
+  cpp: {
+    code: `// C++ 示例 — 读取多行并排序输出
 #include <iostream>
 #include <vector>
 #include <algorithm>
@@ -81,26 +338,58 @@ int main() {
     for (int x : v) cout << x << " ";
     cout << endl;
     return 0;
-}
-`,
-`5
-42 17 8 99 3`
-  ]
+}`,
+    stdin: `5\n42 17 8 99 3`
+  }
 };
 
-function loadExample(lang) {
-  const pair = examples[lang];
-  document.getElementById('code-input').value = pair[0];
-  document.getElementById('stdin-input').value = pair[1] || '';
+// ===== 初始化 CodeMirror =====
+let editor;
+let currentLang = 'python';
+
+function initEditor(lang) {
+  const modeMap = {
+    python: 'python',
+    c: 'text/x-csrc',
+    cpp: 'text/x-c++src'
+  };
+
+  if (editor) {
+    editor.toTextArea();
+    editor = null;
+  }
+
+  editor = CodeMirror.fromTextArea(document.getElementById('code-input'), {
+    mode: modeMap[lang] || 'python',
+    theme: 'monokai',
+    lineNumbers: true,
+    matchBrackets: true,
+    autoCloseBrackets: true,
+    styleActiveLine: true,
+    tabSize: 2,
+    indentUnit: 2,
+    indentWithTabs: false,
+    lineWrapping: false,
+    viewportMargin: 8
+  });
+
+  const ex = examples[lang];
+  editor.setValue(ex.code);
+  document.getElementById('stdin-input').value = ex.stdin;
 }
 
 document.getElementById('code-lang').addEventListener('change', function() {
-  loadExample(this.value);
+  currentLang = this.value;
+  initEditor(currentLang);
+  // 不清除输出
 });
-loadExample('python');
 
+// 首次加载
+initEditor('python');
+
+// ===== 运行代码 =====
 async function runCode() {
-  const code = document.getElementById('code-input').value;
+  const code = editor.getValue();
   const language = document.getElementById('code-lang').value;
   const stdin = document.getElementById('stdin-input').value;
   const output = document.getElementById('code-output');
@@ -128,12 +417,51 @@ async function runCode() {
   }
 }
 
+// ===== 清除输出 =====
 function clearAll() {
   document.getElementById('code-output').value = '';
 }
 
-// Ctrl+Enter 运行
-document.getElementById('code-input').addEventListener('keydown', function(e) {
-  if (e.ctrlKey && e.key === 'Enter') runCode();
+// ===== 输出区域拖拽调整高度 =====
+(function() {
+  const handle = document.getElementById('resize-handle');
+  const output = document.getElementById('code-output');
+  const wrapper = document.querySelector('.code-runner-wrapper');
+  let isResizing = false;
+  let startY, startHeight;
+
+  handle.addEventListener('mousedown', function(e) {
+    e.preventDefault();
+    isResizing = true;
+    startY = e.clientY;
+    startHeight = output.offsetHeight;
+    handle.classList.add('active');
+    document.body.style.cursor = 'ns-resize';
+    document.body.style.userSelect = 'none';
+  });
+
+  document.addEventListener('mousemove', function(e) {
+    if (!isResizing) return;
+    const delta = startY - e.clientY;
+    const wrapperHeight = wrapper.clientHeight;
+    const newHeight = Math.max(40, Math.min(startHeight + delta, wrapperHeight * 0.7));
+    output.style.height = newHeight + 'px';
+  });
+
+  document.addEventListener('mouseup', function() {
+    if (!isResizing) return;
+    isResizing = false;
+    handle.classList.remove('active');
+    document.body.style.cursor = '';
+    document.body.style.userSelect = '';
+  });
+})();
+
+// ===== Ctrl+Enter 运行 =====
+editor.on('keydown', function(cm, e) {
+  if (e.ctrlKey && e.key === 'Enter') {
+    e.preventDefault();
+    runCode();
+  }
 });
 </script>
